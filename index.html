@@ -1,0 +1,1361 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI dla Miasta Torunia — Raport końcowy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,700;9..144,900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper:        #F2EDE3;
+    --paper-2:      #E8E1D2;
+    --paper-3:      #DDD3BE;
+    --ink:          #1B1F2A;
+    --ink-soft:     #4A4F5C;
+    --ink-mute:     #7A7E89;
+    --brick:        #9B3D2F;
+    --brick-soft:   #B85A48;
+    --navy:         #2A4060;
+    --done:         #5A7A4B;
+    --pending:      #B8843A;
+    --missed:       #94463A;
+    --oos:          #8A8579;
+    --hairline:     #C9C0AC;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 17px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  a { color: var(--brick); text-decoration: none; border-bottom: 1px solid rgba(155,61,47,0.3); transition: border-color .2s; }
+  a:hover { border-bottom-color: var(--brick); }
+
+  /* ====== NAV ====== */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgba(242,237,227,0.92);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--hairline);
+  }
+  .nav-inner {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 14px 36px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .nav-brand { color: var(--ink); font-weight: 700; }
+  .nav-brand span { color: var(--brick); }
+  .nav-links { display: flex; gap: 28px; }
+  .nav-links a {
+    color: var(--ink-soft);
+    border-bottom: none;
+    transition: color .2s;
+  }
+  .nav-links a:hover { color: var(--brick); }
+  @media (max-width: 720px) { .nav-links { display: none; } }
+
+  /* ====== WRAP ====== */
+  .wrap {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 0 36px;
+  }
+  @media (max-width: 720px) { .wrap { padding: 0 20px; } }
+
+  /* ====== HERO ====== */
+  .hero {
+    padding: 110px 0 90px;
+    border-bottom: 1px solid var(--hairline);
+    position: relative;
+  }
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    margin-bottom: 28px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .eyebrow::before {
+    content: '';
+    width: 32px;
+    height: 1px;
+    background: var(--brick);
+  }
+  h1.title {
+    font-family: 'Fraunces', serif;
+    font-weight: 900;
+    font-size: clamp(54px, 9vw, 124px);
+    line-height: 0.92;
+    letter-spacing: -0.025em;
+    margin: 0 0 24px;
+    color: var(--ink);
+    font-variation-settings: "opsz" 144, "SOFT" 50;
+  }
+  h1.title em {
+    font-style: italic;
+    font-weight: 500;
+    color: var(--brick);
+  }
+  .hero-lede {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(20px, 2.2vw, 28px);
+    line-height: 1.4;
+    font-weight: 400;
+    max-width: 760px;
+    color: var(--ink-soft);
+    margin: 0 0 64px;
+    font-variation-settings: "opsz" 36;
+  }
+
+  /* honest-status — THE signature element */
+  .honest-status {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    border-top: 1px solid var(--ink);
+    border-bottom: 1px solid var(--ink);
+  }
+  @media (max-width: 860px) { .honest-status { grid-template-columns: repeat(2, 1fr); } }
+  .hs-cell {
+    padding: 32px 24px 28px;
+    border-right: 1px solid var(--hairline);
+    position: relative;
+  }
+  .hs-cell:last-child { border-right: none; }
+  @media (max-width: 860px) {
+    .hs-cell:nth-child(2n) { border-right: none; }
+    .hs-cell:nth-child(-n+2) { border-bottom: 1px solid var(--hairline); }
+  }
+  .hs-num {
+    font-family: 'Fraunces', serif;
+    font-weight: 900;
+    font-size: 86px;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    margin-bottom: 8px;
+    font-variation-settings: "opsz" 144;
+  }
+  .hs-cell[data-status="done"] .hs-num { color: var(--done); }
+  .hs-cell[data-status="pending"] .hs-num { color: var(--pending); }
+  .hs-cell[data-status="missed"] .hs-num { color: var(--missed); }
+  .hs-cell[data-status="oos"] .hs-num { color: var(--oos); }
+  .hs-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    font-weight: 500;
+  }
+
+  /* ====== SECTION ====== */
+  section.block {
+    padding: 100px 0;
+    border-bottom: 1px solid var(--hairline);
+  }
+  section.block:last-of-type { border-bottom: none; }
+  .section-head {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 32px;
+    margin-bottom: 60px;
+    align-items: baseline;
+  }
+  @media (max-width: 720px) { .section-head { grid-template-columns: 1fr; gap: 16px; } }
+  .section-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    color: var(--brick);
+    letter-spacing: 0.06em;
+    padding-top: 12px;
+    border-top: 2px solid var(--brick);
+  }
+  h2.section-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 700;
+    font-size: clamp(34px, 4.5vw, 56px);
+    line-height: 1.02;
+    letter-spacing: -0.02em;
+    margin: 0;
+    color: var(--ink);
+    font-variation-settings: "opsz" 72;
+  }
+  h2.section-title em { font-style: italic; font-weight: 400; color: var(--brick); }
+
+  /* ====== O PROJEKCIE ====== */
+  .about-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+  }
+  @media (max-width: 860px) { .about-grid { grid-template-columns: 1fr; gap: 40px; } }
+  .about-grid p {
+    font-size: 17px;
+    line-height: 1.65;
+    color: var(--ink-soft);
+    margin: 0 0 18px;
+  }
+  .about-grid p strong { color: var(--ink); font-weight: 600; }
+  .meta-row {
+    border-top: 1px solid var(--hairline);
+    margin-top: 60px;
+    padding-top: 32px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+  }
+  @media (max-width: 720px) { .meta-row { grid-template-columns: repeat(2, 1fr); } }
+  .meta-cell .k {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    margin-bottom: 8px;
+  }
+  .meta-cell .v {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    line-height: 1.2;
+    color: var(--ink);
+  }
+
+  /* ====== STATUS LEDGER ====== */
+  .ledger {
+    border-top: 1px solid var(--ink);
+  }
+  .ledger-row {
+    display: grid;
+    grid-template-columns: 100px 1fr 220px;
+    gap: 32px;
+    padding: 28px 0;
+    border-bottom: 1px solid var(--hairline);
+    align-items: baseline;
+    transition: background .2s;
+  }
+  .ledger-row:hover { background: rgba(155,61,47,0.04); }
+  @media (max-width: 860px) {
+    .ledger-row { grid-template-columns: 60px 1fr; gap: 16px; }
+    .ledger-status { grid-column: 1 / -1; padding-top: 8px; }
+  }
+  .ledger-id {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--ink-mute);
+    letter-spacing: 0.04em;
+  }
+  .ledger-name {
+    font-family: 'Fraunces', serif;
+    font-size: 24px;
+    line-height: 1.25;
+    color: var(--ink);
+    font-weight: 500;
+  }
+  .ledger-name .sub {
+    display: block;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    color: var(--ink-soft);
+    font-weight: 400;
+    margin-top: 6px;
+    line-height: 1.5;
+  }
+  .ledger-status {
+    text-align: right;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  @media (max-width: 860px) { .ledger-status { text-align: left; } }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: 2px;
+    border: 1px solid currentColor;
+  }
+  .badge::before {
+    content: '';
+    width: 7px;
+    height: 7px;
+    background: currentColor;
+    border-radius: 50%;
+  }
+  .badge.done    { color: var(--done); }
+  .badge.pending { color: var(--pending); }
+  .badge.missed  { color: var(--missed); }
+  .badge.oos     { color: var(--oos); }
+
+  /* ====== PLANNED VS DELIVERED ====== */
+  .modules { display: grid; gap: 60px; }
+  .module {
+    display: grid;
+    grid-template-columns: 60px 1fr 1fr;
+    gap: 32px 40px;
+    padding-top: 40px;
+    border-top: 1px solid var(--hairline);
+    align-items: baseline;
+  }
+  @media (max-width: 860px) { .module { grid-template-columns: 1fr; gap: 20px; } }
+  .module-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--brick);
+    letter-spacing: 0.04em;
+    grid-column: 1 / 2;
+    grid-row: 1;
+  }
+  .module-name {
+    grid-column: 2 / -1;
+    grid-row: 1;
+    font-family: 'Fraunces', serif;
+    font-size: clamp(26px, 3vw, 34px);
+    line-height: 1.15;
+    color: var(--ink);
+    font-weight: 600;
+    margin: 0 0 12px;
+    letter-spacing: -0.01em;
+  }
+  .module .col:nth-of-type(1) { grid-column: 2 / 3; grid-row: 2; }
+  .module .col:nth-of-type(2) { grid-column: 3 / 4; grid-row: 2; }
+  @media (max-width: 860px) {
+    .module-num,
+    .module-name,
+    .module .col:nth-of-type(1),
+    .module .col:nth-of-type(2) {
+      grid-column: 1 / -1;
+      grid-row: auto;
+    }
+    .module-name { margin: 0 0 8px; }
+  }
+  .col-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed var(--hairline);
+  }
+  .col-label.planned { color: var(--navy); }
+  .col-label.actual  { color: var(--brick); }
+  .col p {
+    margin: 0 0 12px;
+    font-size: 15.5px;
+    line-height: 1.6;
+    color: var(--ink-soft);
+  }
+  .col p strong { color: var(--ink); font-weight: 600; }
+  .module:first-child { border-top: 1px solid var(--ink); }
+
+  /* ====== TEAM ====== */
+  .team-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0;
+    border-top: 1px solid var(--ink);
+    border-bottom: 1px solid var(--ink);
+  }
+  @media (max-width: 980px) { .team-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 540px) { .team-grid { grid-template-columns: 1fr; } }
+  .team-cell {
+    padding: 28px 22px 28px;
+    border-right: 1px solid var(--hairline);
+    min-height: 220px;
+    display: flex;
+    flex-direction: column;
+  }
+  .team-cell:last-child { border-right: none; }
+  @media (max-width: 980px) {
+    .team-cell:nth-child(2n) { border-right: none; }
+    .team-cell:not(:last-child):not(:nth-last-child(2)) { border-bottom: 1px solid var(--hairline); }
+  }
+  @media (max-width: 540px) {
+    .team-cell { border-right: none; border-bottom: 1px solid var(--hairline); }
+    .team-cell:last-child { border-bottom: none; }
+  }
+  .team-role {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--brick);
+    margin-bottom: 12px;
+  }
+  .team-name {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    line-height: 1.15;
+    color: var(--ink);
+    font-weight: 600;
+    margin: 0 0 14px;
+    letter-spacing: -0.01em;
+  }
+  .team-task {
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: var(--ink-soft);
+    margin-top: auto;
+  }
+
+  /* ====== LESSONS ====== */
+  .lessons { display: grid; gap: 4px; }
+  .lesson {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 32px;
+    padding: 36px 0;
+    border-top: 1px solid var(--hairline);
+    align-items: baseline;
+  }
+  .lesson:first-child { border-top: 1px solid var(--ink); }
+  @media (max-width: 720px) { .lesson { grid-template-columns: 1fr; gap: 12px; padding: 28px 0; } }
+  .lesson-num {
+    font-family: 'Fraunces', serif;
+    font-size: 42px;
+    font-weight: 700;
+    color: var(--brick);
+    line-height: 1;
+    font-style: italic;
+  }
+  .lesson-content h3 {
+    font-family: 'Fraunces', serif;
+    font-size: 26px;
+    margin: 0 0 12px;
+    line-height: 1.2;
+    font-weight: 600;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  .lesson-content p {
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--ink-soft);
+  }
+
+  /* ====== NEXT ====== */
+  .next-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+  }
+  @media (max-width: 980px) { .next-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 540px) { .next-grid { grid-template-columns: 1fr; } }
+  .next-card {
+    padding: 28px 24px;
+    background: var(--paper-2);
+    border: 1px solid var(--hairline);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-height: 240px;
+    transition: background .2s;
+  }
+  .next-card:hover { background: var(--paper-3); }
+  .next-prio {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--brick);
+    font-weight: 700;
+  }
+  .next-title {
+    font-family: 'Fraunces', serif;
+    font-size: 20px;
+    line-height: 1.2;
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .next-desc {
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--ink-soft);
+    margin-top: auto;
+  }
+
+  /* ====== CTA / FOOTER ====== */
+  .cta-block {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 80px 0;
+    margin-top: 0;
+  }
+  .cta-inner {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 0 36px;
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 60px;
+    align-items: end;
+  }
+  @media (max-width: 860px) { .cta-inner { grid-template-columns: 1fr; gap: 32px; align-items: start; } }
+  .cta-block h2 {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(34px, 4.5vw, 52px);
+    line-height: 1.05;
+    margin: 0 0 18px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  .cta-block h2 em { font-style: italic; color: var(--brick-soft); font-weight: 500; }
+  .cta-block p {
+    margin: 0;
+    color: rgba(242,237,227,0.7);
+    font-size: 16px;
+    line-height: 1.6;
+    max-width: 520px;
+  }
+  .download-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 26px;
+    background: var(--brick);
+    color: var(--paper);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-weight: 600;
+    border: none;
+    transition: background .2s, transform .15s;
+    cursor: pointer;
+    text-decoration: none;
+    align-self: end;
+    justify-self: end;
+  }
+  .download-btn:hover { background: var(--brick-soft); transform: translateY(-1px); border: none; }
+  @media (max-width: 860px) { .download-btn { justify-self: start; } }
+  .download-btn .arrow { font-size: 16px; }
+
+  footer {
+    background: var(--ink);
+    color: rgba(242,237,227,0.5);
+    padding: 32px 0;
+    border-top: 1px solid rgba(242,237,227,0.1);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .footer-inner {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 0 36px;
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  /* keyboard focus */
+  a:focus-visible, button:focus-visible, .download-btn:focus-visible {
+    outline: 2px solid var(--brick);
+    outline-offset: 3px;
+  }
+
+  /* reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+
+  /* ====== LAYOUT POLISH V2 ====== */
+  body {
+    font-size: 16px;
+    line-height: 1.65;
+    overflow-wrap: break-word;
+  }
+  .wrap,
+  .nav-inner,
+  .cta-inner,
+  .footer-inner {
+    max-width: 1120px;
+  }
+  .nav-inner {
+    padding: 12px 32px;
+  }
+  .nav-links {
+    gap: 20px;
+  }
+  .hero {
+    padding: 88px 0 72px;
+  }
+  h1.title {
+    max-width: 980px;
+    font-size: clamp(52px, 8.4vw, 104px);
+    line-height: 0.95;
+    margin-bottom: 26px;
+  }
+  .hero-lede {
+    max-width: 720px;
+    font-size: clamp(20px, 2vw, 25px);
+    line-height: 1.48;
+    margin-bottom: 48px;
+  }
+  .hs-cell {
+    min-width: 0;
+    padding: 26px 20px 24px;
+  }
+  .hs-num {
+    font-size: clamp(52px, 5.8vw, 72px);
+  }
+  .hs-label {
+    line-height: 1.4;
+  }
+  section.block {
+    padding: 80px 0;
+  }
+  .section-head {
+    grid-template-columns: 64px minmax(0, 1fr);
+    gap: 28px;
+    margin-bottom: 44px;
+    align-items: start;
+  }
+  .section-num {
+    padding-top: 9px;
+  }
+  h2.section-title {
+    max-width: 850px;
+    font-size: clamp(34px, 4.2vw, 49px);
+    line-height: 1.08;
+  }
+  .about-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 64px;
+  }
+  .about-grid p {
+    font-size: 16px;
+    line-height: 1.72;
+  }
+  .key-takeaway {
+    margin-top: 38px;
+    padding: 26px 30px;
+    display: grid;
+    grid-template-columns: 170px minmax(0, 1fr);
+    gap: 30px;
+    align-items: start;
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .key-takeaway .kicker {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    line-height: 1.5;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--brick-soft);
+  }
+  .key-takeaway p {
+    margin: 0;
+    font-family: 'Fraunces', serif;
+    font-size: clamp(20px, 2.5vw, 27px);
+    line-height: 1.35;
+  }
+  .meta-row {
+    margin-top: 42px;
+    padding-top: 28px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .meta-cell {
+    min-width: 0;
+  }
+  .meta-cell .v {
+    font-size: 19px;
+    line-height: 1.3;
+  }
+  .ledger-row {
+    grid-template-columns: 72px minmax(0, 1fr) minmax(150px, 190px);
+    gap: 26px;
+    padding: 25px 0;
+    align-items: start;
+  }
+  .ledger-id {
+    padding-top: 4px;
+  }
+  .ledger-name {
+    min-width: 0;
+    font-size: 22px;
+    line-height: 1.3;
+  }
+  .ledger-name .sub {
+    max-width: 680px;
+    margin-top: 7px;
+    font-size: 14px;
+    line-height: 1.58;
+  }
+  .ledger-status {
+    padding-top: 1px;
+  }
+  .badge {
+    justify-content: center;
+    max-width: 100%;
+    line-height: 1.35;
+    text-align: left;
+  }
+  .modules {
+    gap: 48px;
+  }
+  .module {
+    grid-template-columns: 48px minmax(0, 1fr) minmax(0, 1fr);
+    gap: 24px 36px;
+    padding-top: 34px;
+  }
+  .module-name {
+    font-size: clamp(25px, 2.8vw, 32px);
+    line-height: 1.2;
+    margin-bottom: 6px;
+  }
+  .module > .col:nth-child(3) {
+    grid-column: 2 / 3;
+    grid-row: 2;
+  }
+  .module > .col:nth-child(4) {
+    grid-column: 3 / 4;
+    grid-row: 2;
+  }
+  .col p {
+    font-size: 15px;
+    line-height: 1.68;
+  }
+  .team-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+  .team-cell {
+    grid-column: span 2;
+    min-width: 0;
+    min-height: 190px;
+    padding: 26px 24px;
+  }
+  .team-cell:nth-child(3) {
+    border-right: none;
+  }
+  .team-cell:nth-child(4),
+  .team-cell:nth-child(5) {
+    border-top: 1px solid var(--hairline);
+  }
+  .team-cell:nth-child(4) {
+    grid-column: 2 / span 2;
+  }
+  .team-cell:nth-child(5) {
+    grid-column: 4 / span 2;
+    border-right: none;
+  }
+  .team-name {
+    font-size: 21px;
+  }
+  .team-task {
+    font-size: 13.5px;
+    line-height: 1.58;
+  }
+  .lesson {
+    grid-template-columns: 58px minmax(0, 1fr);
+    gap: 28px;
+    padding: 30px 0;
+  }
+  .lesson-num {
+    font-size: 36px;
+  }
+  .lesson-content h3 {
+    font-size: 24px;
+  }
+  .lesson-content p {
+    max-width: 850px;
+    line-height: 1.68;
+  }
+  .next-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+  }
+  .next-card {
+    min-height: 0;
+    padding: 28px;
+    gap: 12px;
+  }
+  .next-title {
+    font-size: 23px;
+    line-height: 1.25;
+  }
+  .next-desc {
+    margin-top: 4px;
+    font-size: 14.5px;
+    line-height: 1.62;
+  }
+  .cta-block {
+    padding: 68px 0;
+  }
+  .cta-inner {
+    grid-template-columns: minmax(0, 1.5fr) minmax(230px, .7fr);
+    gap: 50px;
+  }
+  .cta-block h2 {
+    font-size: clamp(34px, 4vw, 48px);
+    line-height: 1.12;
+  }
+  .download-btn {
+    max-width: 100%;
+    text-align: center;
+  }
+
+  @media (max-width: 980px) {
+    .team-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .team-cell,
+    .team-cell:nth-child(4),
+    .team-cell:nth-child(5) {
+      grid-column: auto;
+      min-height: 0;
+      border-top: none;
+      border-right: 1px solid var(--hairline);
+      border-bottom: 1px solid var(--hairline);
+    }
+    .team-cell:nth-child(2n) {
+      border-right: none;
+    }
+    .team-cell:last-child {
+      grid-column: 1 / -1;
+      border-right: none;
+      border-bottom: none;
+    }
+  }
+  @media (max-width: 860px) {
+    .ledger-row {
+      grid-template-columns: 52px minmax(0, 1fr);
+      gap: 14px 18px;
+    }
+    .ledger-status {
+      grid-column: 2;
+      padding-top: 0;
+      text-align: left;
+    }
+    .module {
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+    .module > .col:nth-child(3),
+    .module > .col:nth-child(4) {
+      grid-column: 1;
+      grid-row: auto;
+      padding-left: 0;
+    }
+    .key-takeaway {
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+  }
+  @media (max-width: 720px) {
+    .wrap,
+    .nav-inner,
+    .cta-inner,
+    .footer-inner {
+      padding-left: 20px;
+      padding-right: 20px;
+    }
+    .hero {
+      padding-top: 66px;
+      padding-bottom: 56px;
+    }
+    h1.title {
+      font-size: clamp(46px, 14vw, 72px);
+    }
+    .hero-lede {
+      font-size: 19px;
+      margin-bottom: 38px;
+    }
+    section.block {
+      padding: 62px 0;
+    }
+    .section-head {
+      grid-template-columns: 1fr;
+      gap: 12px;
+      margin-bottom: 34px;
+    }
+    .section-num {
+      width: 52px;
+    }
+    .about-grid {
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+    .meta-row {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 24px 18px;
+    }
+    .next-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  @media (max-width: 540px) {
+    .honest-status {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .hs-cell {
+      padding: 22px 16px;
+    }
+    .hs-num {
+      font-size: 50px;
+    }
+    .ledger-row {
+      grid-template-columns: 1fr;
+    }
+    .ledger-id,
+    .ledger-status {
+      grid-column: 1;
+    }
+    .team-grid {
+      grid-template-columns: 1fr;
+    }
+    .team-cell,
+    .team-cell:nth-child(4),
+    .team-cell:nth-child(5),
+    .team-cell:last-child {
+      grid-column: auto;
+      border-right: none;
+      border-bottom: 1px solid var(--hairline);
+    }
+    .team-cell:last-child {
+      border-bottom: none;
+    }
+    .cta-inner {
+      grid-template-columns: 1fr;
+    }
+    .download-btn {
+      width: 100%;
+      justify-self: stretch;
+      justify-content: center;
+    }
+  }
+
+  @media print {
+    nav,
+    .download-btn {
+      display: none;
+    }
+    body {
+      background: #fff;
+      color: #111;
+      font-size: 11pt;
+    }
+    section.block,
+    .hero {
+      padding: 28px 0;
+    }
+    .next-card,
+    .key-takeaway {
+      break-inside: avoid;
+    }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <div class="nav-brand">AI <span>×</span> Toruń · Raport końcowy</div>
+    <div class="nav-links">
+      <a href="#o-projekcie">Projekt</a>
+      <a href="#status">Status</a>
+      <a href="#moduly">Moduły</a>
+      <a href="#zespol">Zespół</a>
+      <a href="#wnioski">Wnioski</a>
+      <a href="#dalej">Co dalej</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero wrap">
+  <div class="eyebrow">Raport końcowy / Marzec–Kwiecień 2026</div>
+  <h1 class="title">AI dla<br>Miasta <em>Torunia</em>.</h1>
+  <p class="hero-lede">
+    Semestr pracy nad inteligentnym systemem komunikacji mieszkańców z urzędem. Ten raport nie sprzedaje sukcesu — opisuje, co zostało dowiezione, co nie i dlaczego.
+  </p>
+
+  <div class="honest-status">
+    <div class="hs-cell" data-status="done">
+      <div class="hs-num">2</div>
+      <div class="hs-label">Zrealizowane</div>
+    </div>
+    <div class="hs-cell" data-status="pending">
+      <div class="hs-num">3</div>
+      <div class="hs-label">W trakcie realizacji</div>
+    </div>
+    <div class="hs-cell" data-status="missed">
+      <div class="hs-num">2</div>
+      <div class="hs-label">Niezrealizowane</div>
+    </div>
+    <div class="hs-cell" data-status="oos">
+      <div class="hs-num">1</div>
+      <div class="hs-label">Poza zakresem fazy</div>
+    </div>
+  </div>
+</header>
+
+<!-- ============ O PROJEKCIE ============ -->
+<section class="block" id="o-projekcie">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="section-num">01 ·</div>
+      <h2 class="section-title">O projekcie <em>i jego ewolucji</em></h2>
+    </div>
+
+    <div class="about-grid">
+      <div>
+        <p>
+          Projekt powstał jako inicjatywa studentów psychologii i kognitywistyki działających w fundacji popularyzującej sztuczną inteligencję. <strong>Cel wyjściowy:</strong> jedna platforma AI dla miasta, integrująca chatbota dla mieszkańców, mapę życia, system zgłoszeń miejskich i narzędzia wspierające urzędników.
+        </p>
+        <p>
+          W trakcie semestru zakres uległ istotnej ewolucji — w kierunku produktu uniwersalnego (strona dla mieszkańców i urzędników w ogólności) oraz w stronę bezpośredniego kontaktu z odbiorcami przez wystąpienie na Targach Praktyków Partycypacji i szkolenie urzędników w Brodnicy.
+        </p>
+      </div>
+      <div>
+        <p>
+          <strong>Dlaczego ewolucja?</strong> Praca z administracją publiczną wymaga miesięcy budowania relacji, audytów RODO/KRI/WCAG i procedur zakupowych. Architektura RAG dla chatbota wymagała zasobów dewelperskich przekraczających możliwości pojedynczego semestru. Modele AI ewoluowały szybciej niż harmonogram (od GPT-4.5 przez 4.8 do 5.0).
+        </p>
+        <p>
+          <strong>Co z tego wynika:</strong> raport opisuje realny stan, a nie pierwotną ambicję — bo ta druga droga byłaby kłamstwem wobec własnej pracy.
+        </p>
+      </div>
+    </div>
+
+    <div class="key-takeaway">
+      <div class="kicker">Najważniejszy wniosek</div>
+      <p>Zrobiliśmy mniej niż planowaliśmy, ale to, co powstało, ma realną wartość. Wiemy też precyzyjnie, dlaczego pozostałych elementów nie udało się domknąć.</p>
+    </div>
+
+    <div class="meta-row">
+      <div class="meta-cell">
+        <div class="k">Okres</div>
+        <div class="v">Marzec–Kwiecień 2026</div>
+      </div>
+      <div class="meta-cell">
+        <div class="k">Zespół</div>
+        <div class="v">5 osób</div>
+      </div>
+      <div class="meta-cell">
+        <div class="k">Charakter</div>
+        <div class="v">Badawczy, społeczny, pilotażowy</div>
+      </div>
+      <div class="meta-cell">
+        <div class="k">Partner docelowy</div>
+        <div class="v">UM Toruń (rozmowy)</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ STATUS LEDGER ============ -->
+<section class="block" id="status">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="section-num">02 ·</div>
+      <h2 class="section-title">Status <em>komponentów</em></h2>
+    </div>
+
+    <div class="ledger">
+      <div class="ledger-row">
+        <div class="ledger-id">3.1</div>
+        <div class="ledger-name">Interaktywna Mapa Życia Obywatela
+          <span class="sub">Działający prototyp HTML. Checklisty, słowniczek finansowy, pełna anonimowość. Unikalny moduł na tle benchmarków światowych.</span>
+        </div>
+        <div class="ledger-status"><span class="badge done">Zrealizowane</span></div>
+      </div>
+
+      <div class="ledger-row">
+        <div class="ledger-id">3.2</div>
+        <div class="ledger-name">Strona internetowa projektu
+          <span class="sub">Blisko ukończenia — wymaga decyzji o ostatecznym kierunku (portfolio, hosting prototypów, narzędzie dla urzędników).</span>
+        </div>
+        <div class="ledger-status"><span class="badge pending">W finalizacji</span></div>
+      </div>
+
+      <div class="ledger-row">
+        <div class="ledger-id">3.3</div>
+        <div class="ledger-name">Dokumentacja strategiczna i koncepcyjna
+          <span class="sub">Notatka końcowa v2, Głos Torunia Pro, plan 4-tygodniowy, dokument o urzędnikach, ankieta. Samodzielna wartość projektu.</span>
+        </div>
+        <div class="ledger-status"><span class="badge done">Zrealizowane</span></div>
+      </div>
+
+      <div class="ledger-row">
+        <div class="ledger-id">3.4</div>
+        <div class="ledger-name">Targi Praktyków Partycypacji — przygotowanie
+          <span class="sub">Plan wystąpienia z metodyką „vibe coding" + chatboty + rozszerzenia (antigravity, codecast). Wydarzenie jeszcze przed nami — pełne wnioski po Targach Praktyków Partycypacji.</span>
+        </div>
+        <div class="ledger-status"><span class="badge pending">W trakcie realizacji</span></div>
+      </div>
+
+      <div class="ledger-row">
+        <div class="ledger-id">3.5</div>
+        <div class="ledger-name">Szkolenie urzędników w Brodnicy
+          <span class="sub">Trzy osoby z zespołu zaangażowane. Materiały merytoryczne gotowe, szkolenie w trakcie przygotowań — kontakt z rzeczywistymi odbiorcami jeszcze przed nami.</span>
+        </div>
+        <div class="ledger-status"><span class="badge pending">W trakcie realizacji</span></div>
+      </div>
+
+      <div class="ledger-row">
+        <div class="ledger-id">4.1</div>
+        <div class="ledger-name">Chatbot RAG — Asystent Mieszkańca
+          <span class="sub">Dokumentacja koncepcyjna kompletna, brak prototypu. Złożoność techniczna pełnej architektury RAG przekroczyła zasoby semestru.</span>
+        </div>
+        <div class="ledger-status"><span class="badge missed">Niezrealizowane</span></div>
+      </div>
+
+      <div class="ledger-row">
+        <div class="ledger-id">4.2</div>
+        <div class="ledger-name">Interaktywna strona zgłoszeń (Głos Torunia Pro)
+          <span class="sub">Dokumentacja koncepcyjna kompletna, brak prototypu. Computer vision + RODO + routing — pakiet techniczny porównywalny z chatbotem.</span>
+        </div>
+        <div class="ledger-status"><span class="badge missed">Niezrealizowane</span></div>
+      </div>
+
+      <div class="ledger-row">
+        <div class="ledger-id">4.3</div>
+        <div class="ledger-name">Pozostałe moduły długoterminowej wizji
+          <span class="sub">Uproszczona komunikacja, analiza problemów miasta, sentyment, Copilot dla urzędników. Świadomie poza zakresem tej fazy.</span>
+        </div>
+        <div class="ledger-status"><span class="badge oos">Poza zakresem</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ MODULES PLANNED vs DELIVERED ============ -->
+<section class="block" id="moduly">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="section-num">03 ·</div>
+      <h2 class="section-title">Co planowaliśmy, <em>co dowieźliśmy</em></h2>
+    </div>
+
+    <div class="modules">
+
+      <div class="module">
+        <div class="module-num">M.01</div>
+        <h3 class="module-name">Mapa Życia Obywatela</h3>
+        <div class="col">
+          <div class="col-label planned">Plan</div>
+          <p>Interaktywna oś życia z 8 etapami, checklistami dla każdej sytuacji życiowej, słownikiem finansowym, pełną anonimowością i integracją z chatbotem przez przycisk „Zapytaj asystenta".</p>
+        </div>
+        <div class="col">
+          <div class="col-label actual">Rzeczywistość</div>
+          <p>Działający prototyp HTML z checklistami dla wybranych etapów + słowniczek (IKE, IKZE, PPK, podatek Belki). Wdrożenie produkcyjne i integracja z chatbotem przeniesione na kolejną fazę. <strong>Realne osiągnięcie: koncepcja unikalna na tle światowym.</strong></p>
+        </div>
+      </div>
+
+      <div class="module">
+        <div class="module-num">M.02</div>
+        <h3 class="module-name">Chatbot RAG — Asystent Mieszkańca</h3>
+        <div class="col">
+          <div class="col-label planned">Plan</div>
+          <p>Działający chatbot oparty na PLLuM z zamkniętą bazą wiedzy BIP/uchwał/regulaminów, confidence scoring, eskalacją do człowieka, cytowaniem źródeł. 10–15 kategorii spraw toruńskich na MVP.</p>
+        </div>
+        <div class="col">
+          <div class="col-label actual">Rzeczywistość</div>
+          <p>Solidna dokumentacja koncepcyjna i architektoniczna z benchmarkiem 6 systemów światowych. Brak działającego prototypu. <strong>Przyczyna: pełna architektura RAG wymaga zasobów DevOps poza zakresem semestru.</strong></p>
+        </div>
+      </div>
+
+      <div class="module">
+        <div class="module-num">M.03</div>
+        <h3 class="module-name">Inteligentny System Zgłoszeń (Głos Torunia Pro)</h3>
+        <div class="col">
+          <div class="col-label planned">Plan</div>
+          <p>Aplikacja zgłoszeniowa z computer vision, automatyczną klasyfikacją problemów, anonimizacją (rozmywanie twarzy/tablic), Human-in-the-Loop, trackingiem InPost.</p>
+        </div>
+        <div class="col">
+          <div class="col-label actual">Rzeczywistość</div>
+          <p>Pełna dokumentacja strategiczna z benchmarkiem (OneService Singapur, NYC311, FixMyStreet) i koncepcją kampanii OOH. <strong>Brak prototypu — moduł odłożony na fazę kolejną.</strong></p>
+        </div>
+      </div>
+
+      <div class="module">
+        <div class="module-num">M.04</div>
+        <h3 class="module-name">Pilotaż w UM Toruń</h3>
+        <div class="col">
+          <div class="col-label planned">Plan</div>
+          <p>Formalna współpraca z Urzędem Miasta Torunia. Wdrożenie wybranych komponentów w środowisku rzeczywistym, walidacja z urzędnikami.</p>
+        </div>
+        <div class="col">
+          <div class="col-label actual">Rzeczywistość</div>
+          <p>Zwrot w stronę produktu uniwersalnego + kontakt z odbiorcami przez Targi Praktyków Partycypacji i szkolenie w Brodnicy. <strong>Pilotaż urzędowy wymaga horyzontu wieloletniego, nie pojedynczego semestru.</strong></p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ============ ZESPÓŁ ============ -->
+<section class="block" id="zespol">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="section-num">04 ·</div>
+      <h2 class="section-title">Zespół <em>i podział pracy</em></h2>
+    </div>
+
+    <div class="team-grid">
+      <div class="team-cell">
+        <div class="team-role">Koordynator</div>
+        <h3 class="team-name">Maciej Piotrowski</h3>
+        <div class="team-task">Koordynacja projektu, kontakt z prowadzącym, integracja prac zespołu, harmonogram.</div>
+      </div>
+      <div class="team-cell">
+        <div class="team-role">Strona zgłoszeń</div>
+        <h3 class="team-name">Pestka z Dyni</h3>
+        <div class="team-task">Interaktywna strona zgłoszeń miejskich — komponent przeniesiony na kolejną fazę projektu.</div>
+      </div>
+      <div class="team-cell">
+        <div class="team-role">Urzędnicy / TPP</div>
+        <h3 class="team-name">Hanna Lejer</h3>
+        <div class="team-task">Strona dla urzędników, Targi Praktyków Partycypacji, szkolenie urzędników w Brodnicy.</div>
+      </div>
+      <div class="team-cell">
+        <div class="team-role">Mapa życia / TPP</div>
+        <h3 class="team-name">Alicja Kamińska</h3>
+        <div class="team-task">Strona dla urzędników, Targi Praktyków Partycypacji, Interaktywna Mapa Życia, szkolenie w Brodnicy.</div>
+      </div>
+      <div class="team-cell">
+        <div class="team-role">AI Chat</div>
+        <h3 class="team-name">Nikita Koshylka</h3>
+        <div class="team-task">AI Chat (komponent niezrealizowany w tej fazie), szkolenie urzędników w Brodnicy.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ LESSONS ============ -->
+<section class="block" id="wnioski">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="section-num">05 ·</div>
+      <h2 class="section-title">Wnioski <em>z semestru</em></h2>
+    </div>
+
+    <div class="lessons">
+      <div class="lesson">
+        <div class="lesson-num">i.</div>
+        <div class="lesson-content">
+          <h3>Lepszy podział obowiązków od początku</h3>
+          <p>Pod koniec semestru część zespołu nie miała wystarczająco pracy, podczas gdy inni byli obciążeni. Na przyszłość: zadania „rozszerzone" dla osób kończących wcześniej oraz formalny checkpoint w połowie semestru z możliwością re-alokacji zasobów.</p>
+        </div>
+      </div>
+
+      <div class="lesson">
+        <div class="lesson-num">ii.</div>
+        <div class="lesson-content">
+          <h3>Planowanie z uwzględnieniem ewolucji AI</h3>
+          <p>Modele językowe rozwijają się szybciej niż cykl akademicki — od GPT-4.5 przez 4.8 do 5.0 w trakcie jednego semestru. Sztywne trzymanie się początkowego planu, gdy technologia zmienia się pod nogami, nie jest dyscypliną. Harmonogram potrzebuje formalnych punktów re-ewaluacji.</p>
+        </div>
+      </div>
+
+      <div class="lesson">
+        <div class="lesson-num">iii.</div>
+        <div class="lesson-content">
+          <h3>Bez przerw na nieefektywność między etapami</h3>
+          <p>Między etapami pojawiały się przestoje, w których nie do końca było wiadomo, co robić. Niektóre projekty przeszły w stan zawieszenia. Na koniec każdego etapu powinno być zdefiniowane jasne wejście w kolejny — z zadaniami kapitalizującymi dotychczasową pracę (testy, dokumentacja, walidacja).</p>
+        </div>
+      </div>
+
+      <div class="lesson">
+        <div class="lesson-num">iv.</div>
+        <div class="lesson-content">
+          <h3>Realistyczna skala ambicji</h3>
+          <p>Zespół studencki w jednym semestrze nie zbuduje produkcyjnego chatbota RAG zintegrowanego z BIP. Może zbudować działający prototyp na bardzo wąskim zakresie i opracować dokumentację gotową do skalowania. <strong>Mniej, ale dowiezione, ma większą wartość niż wszystko, ale nieukończone.</strong></p>
+        </div>
+      </div>
+
+      <div class="lesson">
+        <div class="lesson-num">v.</div>
+        <div class="lesson-content">
+          <h3>Wcześniejszy realny kontakt z urzędem</h3>
+          <p>Praca z UM zaczyna się od miesięcy budowania relacji, audytów (RODO, KRI, WCAG) i procedur zakupowych. Jeśli pilotaż urzędowy jest realnym celem, kontakt powinien nastąpić zanim zacznie się semestr — z prostym, demonstrowalnym narzędziem w ręku.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ NEXT ============ -->
+<section class="block" id="dalej">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="section-num">06 ·</div>
+      <h2 class="section-title">Co dalej: <em>rekomendacje na kolejną fazę</em></h2>
+    </div>
+
+    <div class="next-grid">
+      <div class="next-card">
+        <div class="next-prio">Priorytet 01</div>
+        <div class="next-title">Domknięcie Mapy Życia jako MVP</div>
+        <div class="next-desc">Wdrożenie online (GitHub Pages / Vercel), testy użyteczności z 5–10 osobami, sformalizowany proces utrzymania aktualności treści.</div>
+      </div>
+      <div class="next-card">
+        <div class="next-prio">Priorytet 02</div>
+        <div class="next-title">Chatbot w wąskim, ale ukończonym zakresie</div>
+        <div class="next-desc">5–10 tematów (nie 10–15), golden dataset przed pipeline'em, modułowa architektura umożliwiająca wymianę modelu generacyjnego.</div>
+      </div>
+      <div class="next-card">
+        <div class="next-prio">Priorytet 03</div>
+        <div class="next-title">Kapitalizacja wniosków z Targów Praktyków Partycypacji</div>
+        <div class="next-desc">Aneks do raportu po wydarzeniu, wykorzystanie kontaktów zebranych na Targach Praktyków Partycypacji jako punkt wyjścia do kolejnej współpracy.</div>
+      </div>
+      <div class="next-card">
+        <div class="next-prio">Priorytet 04</div>
+        <div class="next-title">Domknięcie kierunku strony</div>
+        <div class="next-desc">Jednoznaczna decyzja przed kolejnym semestrem: portfolio/case study, hosting prototypów czy narzędzie dla urzędników. Dobór architektury do decyzji.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CTA ============ -->
+<section class="cta-block">
+  <div class="cta-inner">
+    <div>
+      <h2>Pełny raport <em>w formacie Word.</em></h2>
+      <p>Strona przedstawia główne wnioski w skondensowanej formie. Pełen dokument zawiera szczegółowe omówienie modułów, analizę wykorzystanych narzędzi AI, opis wyzwań organizacyjnych oraz tabelę statusu wszystkich komponentów.</p>
+    </div>
+    <a class="download-btn" href="Raport_Koncowy_AI_dla_Torunia.docx" download>
+      Pobierz raport <span class="arrow">↓</span>
+    </a>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-inner">
+    <div>AI × Toruń · Raport końcowy · 2026</div>
+    <div>Fundacja popularyzująca AI · projekt studencki</div>
+  </div>
+</footer>
+
+</body>
+</html>
